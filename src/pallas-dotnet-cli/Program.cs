@@ -1,8 +1,8 @@
-﻿using Pallas.Dotnet.Cli;
+﻿using PallasDotnet;
 
 var nodeClient = PallasDotnetRs.PallasDotnetRs
     .Connect("/home/rawriclark/.dmtr/tmp/tasteful-infusion-213dd4/mainnet-v135.socket", PallasDotnetRs.PallasDotnetRs.MainnetMagic());
-Console.WriteLine($"Node Connected: {nodeClient.clientPtr} {nodeClient.chainSyncPtr}");
+Console.WriteLine($"Node Connected: {nodeClient.clientPtr}");
 
 var intersection = PallasDotnetRs.PallasDotnetRs.FindIntersect(nodeClient, new PallasDotnetRs.PallasDotnetRs.Point
 {
@@ -12,13 +12,31 @@ var intersection = PallasDotnetRs.PallasDotnetRs.FindIntersect(nodeClient, new P
 
 Console.WriteLine($"Intersection Found: {intersection.slot} {Convert.ToHexString(intersection.hash.ToArray()).ToLower()}");
 
-while(true)
+while (true)
 {
     var nextResponse = PallasDotnetRs.PallasDotnetRs.ChainSyncNext(nodeClient);
-    if(nextResponse.action == 2) break;
-    Console.WriteLine($"Next Response: {(NextResponseAction)nextResponse.action} {nextResponse.block.number} {nextResponse.block.slot} {Convert.ToHexString(nextResponse.block.hash.ToArray()).ToLower()}");
+    if (nextResponse.action == 2)
+    {
+        await Task.Delay(20000);
+        continue;
+    }
+    Console.WriteLine($"Next Response: {(NextResponseAction)nextResponse.action} {nextResponse.block.number} {nextResponse.block.slot} {Convert.ToHexString(nextResponse.block.hash.ToArray()).ToLower()} {nextResponse.block.trnasactionBodies.Count}");
+    Console.WriteLine("====================================");
+    foreach (var transactionBody in nextResponse.block.trnasactionBodies)
+    {
+        Console.WriteLine($"Transaction Body: {Convert.ToHexString(transactionBody.id.ToArray()).ToLower()} {transactionBody.inputs.Count} {transactionBody.outputs.Count}");
+        foreach (var input in transactionBody.inputs)
+        {
+            Console.WriteLine($"\t Input: {Convert.ToHexString(input.id.ToArray()).ToLower()} {input.index}");
+        }
+        foreach (var output in transactionBody.outputs)
+        {
+            Console.WriteLine($"\t Output: {output.amount.coin} {PallasDotnetRs.PallasDotnetRs.AddressBytesToBech32(output.address)} {output.amount.multiAsset.Count}");
+        }
+    }
+    Console.WriteLine("====================================");
 }
 
-Console.WriteLine($"Disconnected: {nodeClient.clientPtr} {nodeClient.chainSyncPtr}");
+Console.WriteLine($"Disconnected: {nodeClient.clientPtr}");
 PallasDotnetRs.PallasDotnetRs.Disconnect(nodeClient);
 

@@ -7,8 +7,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{DF1FEA47-BF4
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "pallas-dotnet", "src\pallas-dotnet\pallas-dotnet.csproj", "{D94F29F5-5E0C-42FC-A244-AA6CAA51B9AB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "example-dotnet", "src\example-dotnet\example-dotnet.csproj", "{C9428AFA-DA2D-4D68-AEB6-BC185D6CD505}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pallas-dotnet-test", "src\pallas-dotnet-test\pallas-dotnet-test.csproj", "{0A1C7AB0-0C41-4487-BF97-641FB6EF54E9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pallas-dotnet-cli", "src\pallas-dotnet-cli\pallas-dotnet-cli.csproj", "{0D3FC025-52FE-42CB-8A96-34A94C1FB322}"
@@ -23,10 +21,6 @@ Global
 		{D94F29F5-5E0C-42FC-A244-AA6CAA51B9AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D94F29F5-5E0C-42FC-A244-AA6CAA51B9AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D94F29F5-5E0C-42FC-A244-AA6CAA51B9AB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C9428AFA-DA2D-4D68-AEB6-BC185D6CD505}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C9428AFA-DA2D-4D68-AEB6-BC185D6CD505}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C9428AFA-DA2D-4D68-AEB6-BC185D6CD505}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C9428AFA-DA2D-4D68-AEB6-BC185D6CD505}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0A1C7AB0-0C41-4487-BF97-641FB6EF54E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0A1C7AB0-0C41-4487-BF97-641FB6EF54E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A1C7AB0-0C41-4487-BF97-641FB6EF54E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -41,7 +35,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D94F29F5-5E0C-42FC-A244-AA6CAA51B9AB} = {DF1FEA47-BF46-4B06-A110-18A6E8B81C7C}
-		{C9428AFA-DA2D-4D68-AEB6-BC185D6CD505} = {DF1FEA47-BF46-4B06-A110-18A6E8B81C7C}
 		{0A1C7AB0-0C41-4487-BF97-641FB6EF54E9} = {DF1FEA47-BF46-4B06-A110-18A6E8B81C7C}
 		{0D3FC025-52FE-42CB-8A96-34A94C1FB322} = {DF1FEA47-BF46-4B06-A110-18A6E8B81C7C}
 	EndGlobalSection

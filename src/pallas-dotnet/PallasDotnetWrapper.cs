@@ -24,6 +24,24 @@ namespace PallasDotnetRs
             public ulong slot;
             public List<byte> hash;
             public ulong number;
+            public List<TransactionBody> trnasactionBodies;
+        }
+        public struct TransactionBody {
+            public List<byte> id;
+            public List<TransactionInput> inputs;
+            public List<TransactionOutput> outputs;
+        }
+        public struct TransactionInput {
+            public List<byte> id;
+            public ulong index;
+        }
+        public struct TransactionOutput {
+            public List<byte> address;
+            public Value amount;
+        }
+        public struct Value {
+            public ulong coin;
+            public Dictionary<List<byte>,Dictionary<List<byte>,ulong>> multiAsset;
         }
         public struct NextResponse {
             public byte action;
@@ -32,7 +50,6 @@ namespace PallasDotnetRs
         }
         public struct NodeClientWrapper {
             public UIntPtr clientPtr;
-            public UIntPtr chainSyncPtr;
         }
         public static ulong MainnetMagic(
         ) {
@@ -72,6 +89,11 @@ namespace PallasDotnetRs
         ) {
             return (_FnChainSyncHasAgency(_StructNodeClientWrapper.Encode(clientWrapper)) != 0);
         }
+        public static string AddressBytesToBech32(
+            IReadOnlyCollection<byte> addressBytes
+        ) {
+            return _FreeStr(_FnAddressBytesToBech32(_AllocSlice<byte, byte>(addressBytes, 1, 1, _arg3 => _arg3)));
+        }
         public static void Disconnect(
             NodeClientWrapper clientWrapper
         ) {
@@ -95,13 +117,13 @@ namespace PallasDotnetRs
             public static _StructPoint Encode(Point structArg) {
                 return new _StructPoint {
                     slot = structArg.slot,
-                    hash = _AllocSlice<byte, byte>(structArg.hash, 1, 1, _arg3 => _arg3)
+                    hash = _AllocSlice<byte, byte>(structArg.hash, 1, 1, _arg4 => _arg4)
                 };
             }
             public Point Decode() {
                 return new Point {
                     slot = this.slot,
-                    hash = _FreeSlice<byte, byte, List<byte>>(this.hash, 1, 1, _arg4 => _arg4)
+                    hash = _FreeSlice<byte, byte, List<byte>>(this.hash, 1, 1, _arg5 => _arg5)
                 };
             }
         }
@@ -110,55 +132,126 @@ namespace PallasDotnetRs
             public ulong slot;
             public _RawSlice hash;
             public ulong number;
+            public _RawSlice trnasactionBodies;
             public static _StructBlock Encode(Block structArg) {
                 return new _StructBlock {
                     slot = structArg.slot,
-                    hash = _AllocSlice<byte, byte>(structArg.hash, 1, 1, _arg5 => _arg5),
-                    number = structArg.number
+                    hash = _AllocSlice<byte, byte>(structArg.hash, 1, 1, _arg6 => _arg6),
+                    number = structArg.number,
+                    trnasactionBodies = _AllocSlice<TransactionBody, _StructTransactionBody>(structArg.trnasactionBodies, 48, 8, _arg7 => _StructTransactionBody.Encode(_arg7))
                 };
             }
             public Block Decode() {
                 return new Block {
                     slot = this.slot,
-                    hash = _FreeSlice<byte, byte, List<byte>>(this.hash, 1, 1, _arg6 => _arg6),
-                    number = this.number
+                    hash = _FreeSlice<byte, byte, List<byte>>(this.hash, 1, 1, _arg8 => _arg8),
+                    number = this.number,
+                    trnasactionBodies = _FreeSlice<TransactionBody, _StructTransactionBody, List<TransactionBody>>(this.trnasactionBodies, 48, 8, _arg9 => (_arg9).Decode())
+                };
+            }
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct _StructTransactionBody {
+            public _RawSlice id;
+            public _RawSlice inputs;
+            public _RawSlice outputs;
+            public static _StructTransactionBody Encode(TransactionBody structArg) {
+                return new _StructTransactionBody {
+                    id = _AllocSlice<byte, byte>(structArg.id, 1, 1, _arg10 => _arg10),
+                    inputs = _AllocSlice<TransactionInput, _StructTransactionInput>(structArg.inputs, 24, 8, _arg11 => _StructTransactionInput.Encode(_arg11)),
+                    outputs = _AllocSlice<TransactionOutput, _StructTransactionOutput>(structArg.outputs, 40, 8, _arg12 => _StructTransactionOutput.Encode(_arg12))
+                };
+            }
+            public TransactionBody Decode() {
+                return new TransactionBody {
+                    id = _FreeSlice<byte, byte, List<byte>>(this.id, 1, 1, _arg13 => _arg13),
+                    inputs = _FreeSlice<TransactionInput, _StructTransactionInput, List<TransactionInput>>(this.inputs, 24, 8, _arg14 => (_arg14).Decode()),
+                    outputs = _FreeSlice<TransactionOutput, _StructTransactionOutput, List<TransactionOutput>>(this.outputs, 40, 8, _arg15 => (_arg15).Decode())
+                };
+            }
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct _StructTransactionInput {
+            public _RawSlice id;
+            public ulong index;
+            public static _StructTransactionInput Encode(TransactionInput structArg) {
+                return new _StructTransactionInput {
+                    id = _AllocSlice<byte, byte>(structArg.id, 1, 1, _arg16 => _arg16),
+                    index = structArg.index
+                };
+            }
+            public TransactionInput Decode() {
+                return new TransactionInput {
+                    id = _FreeSlice<byte, byte, List<byte>>(this.id, 1, 1, _arg17 => _arg17),
+                    index = this.index
+                };
+            }
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct _StructTransactionOutput {
+            public _RawSlice address;
+            public _StructValue amount;
+            public static _StructTransactionOutput Encode(TransactionOutput structArg) {
+                return new _StructTransactionOutput {
+                    address = _AllocSlice<byte, byte>(structArg.address, 1, 1, _arg18 => _arg18),
+                    amount = _StructValue.Encode(structArg.amount)
+                };
+            }
+            public TransactionOutput Decode() {
+                return new TransactionOutput {
+                    address = _FreeSlice<byte, byte, List<byte>>(this.address, 1, 1, _arg19 => _arg19),
+                    amount = (this.amount).Decode()
+                };
+            }
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct _StructValue {
+            public ulong coin;
+            public _RawSlice multiAsset;
+            public static _StructValue Encode(Value structArg) {
+                return new _StructValue {
+                    coin = structArg.coin,
+                    multiAsset = _AllocDict<List<byte>, Dictionary<List<byte>,ulong>, _RawTuple0>(structArg.multiAsset, 32, 8, _arg20 => ((Func<(List<byte>,Dictionary<List<byte>,ulong>), _RawTuple0>)(_arg21 => new _RawTuple0 { elem0 = _AllocSlice<byte, byte>(_arg21.Item1, 1, 1, _arg22 => _arg22),elem1 = _AllocDict<List<byte>, ulong, _RawTuple1>(_arg21.Item2, 24, 8, _arg23 => ((Func<(List<byte>,ulong), _RawTuple1>)(_arg24 => new _RawTuple1 { elem0 = _AllocSlice<byte, byte>(_arg24.Item1, 1, 1, _arg25 => _arg25),elem1 = _arg24.Item2 }))(_arg23)) }))(_arg20))
+                };
+            }
+            public Value Decode() {
+                return new Value {
+                    coin = this.coin,
+                    multiAsset = _FreeDict<List<byte>, Dictionary<List<byte>,ulong>, _RawTuple0, Dictionary<List<byte>, Dictionary<List<byte>,ulong>>>(this.multiAsset, 32, 8, _arg26 => ((Func<_RawTuple0, (List<byte>,Dictionary<List<byte>,ulong>)>)(_arg27 => (_FreeSlice<byte, byte, List<byte>>(_arg27.elem0, 1, 1, _arg28 => _arg28),_FreeDict<List<byte>, ulong, _RawTuple1, Dictionary<List<byte>, ulong>>(_arg27.elem1, 24, 8, _arg29 => ((Func<_RawTuple1, (List<byte>,ulong)>)(_arg30 => (_FreeSlice<byte, byte, List<byte>>(_arg30.elem0, 1, 1, _arg31 => _arg31),_arg30.elem1)))(_arg29)))))(_arg26))
                 };
             }
         }
         [StructLayout(LayoutKind.Sequential)]
         private struct _StructNextResponse {
             public byte action;
-            public _RawTuple0 tip;
-            public _RawTuple0 block;
+            public _RawTuple2 tip;
+            public _RawTuple2 block;
             public static _StructNextResponse Encode(NextResponse structArg) {
                 return new _StructNextResponse {
                     action = structArg.action,
-                    tip = _EncodeOption(structArg.tip, _arg7 => _StructBlock.Encode(_arg7)),
-                    block = _EncodeOption(structArg.block, _arg8 => _StructBlock.Encode(_arg8))
+                    tip = _EncodeOption(structArg.tip, _arg32 => _StructBlock.Encode(_arg32)),
+                    block = _EncodeOption(structArg.block, _arg33 => _StructBlock.Encode(_arg33))
                 };
             }
             public NextResponse Decode() {
                 return new NextResponse {
                     action = this.action,
-                    tip = _DecodeOption(this.tip, _arg9 => (_arg9).Decode()),
-                    block = _DecodeOption(this.block, _arg10 => (_arg10).Decode())
+                    tip = _DecodeOption(this.tip, _arg34 => (_arg34).Decode()),
+                    block = _DecodeOption(this.block, _arg35 => (_arg35).Decode())
                 };
             }
         }
         [StructLayout(LayoutKind.Sequential)]
         private struct _StructNodeClientWrapper {
             public UIntPtr clientPtr;
-            public UIntPtr chainSyncPtr;
             public static _StructNodeClientWrapper Encode(NodeClientWrapper structArg) {
                 return new _StructNodeClientWrapper {
-                    clientPtr = structArg.clientPtr,
-                    chainSyncPtr = structArg.chainSyncPtr
+                    clientPtr = structArg.clientPtr
                 };
             }
             public NodeClientWrapper Decode() {
                 return new NodeClientWrapper {
-                    clientPtr = this.clientPtr,
-                    chainSyncPtr = this.chainSyncPtr
+                    clientPtr = this.clientPtr
                 };
             }
         }
@@ -180,17 +273,21 @@ namespace PallasDotnetRs
             ulong networkMagic
         );
         [DllImport("pallas_dotnet_rs", EntryPoint = "rnet_export_find_intersect", CallingConvention = CallingConvention.Cdecl)]
-        private static extern _RawTuple1 _FnFindIntersect(
+        private static extern _RawTuple3 _FnFindIntersect(
             _StructNodeClientWrapper clientWrapper,
             _StructPoint knownPoint
         );
         [DllImport("pallas_dotnet_rs", EntryPoint = "rnet_export_chain_sync_next", CallingConvention = CallingConvention.Cdecl)]
-        private static extern _RawTuple2 _FnChainSyncNext(
+        private static extern _RawTuple4 _FnChainSyncNext(
             _StructNodeClientWrapper clientWrapper
         );
         [DllImport("pallas_dotnet_rs", EntryPoint = "rnet_export_chain_sync_has_agency", CallingConvention = CallingConvention.Cdecl)]
         private static extern byte _FnChainSyncHasAgency(
             _StructNodeClientWrapper clientWrapper
+        );
+        [DllImport("pallas_dotnet_rs", EntryPoint = "rnet_export_address_bytes_to_bech32", CallingConvention = CallingConvention.Cdecl)]
+        private static extern _RawSlice _FnAddressBytesToBech32(
+            _RawSlice addressBytes
         );
         [DllImport("pallas_dotnet_rs", EntryPoint = "rnet_export_disconnect", CallingConvention = CallingConvention.Cdecl)]
         private static extern void _FnDisconnect(
@@ -198,36 +295,27 @@ namespace PallasDotnetRs
         );
         [StructLayout(LayoutKind.Sequential)]
         private struct _RawTuple0 {
-            public _StructBlock elem0;
-            public byte elem1;
-        }
-        private static _RawTuple0 _EncodeOption<T>(T arg, Func<T, _StructBlock> converter) {
-            if (arg != null) {
-                return new _RawTuple0 { elem0 = converter(arg), elem1 = 1 };
-            } else {
-                return new _RawTuple0 { elem0 = default(_StructBlock), elem1 = 0 };
-            }
-        }
-        private static T _DecodeOption<T>(_RawTuple0 arg, Func<_StructBlock, T> converter) {
-            if (arg.elem1 != 0) {
-                return converter(arg.elem0);
-            } else {
-                return default(T);
-            }
+            public _RawSlice elem0;
+            public _RawSlice elem1;
         }
         [StructLayout(LayoutKind.Sequential)]
         private struct _RawTuple1 {
-            public _StructPoint elem0;
+            public _RawSlice elem0;
+            public ulong elem1;
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct _RawTuple2 {
+            public _StructBlock elem0;
             public byte elem1;
         }
-        private static _RawTuple1 _EncodeOption<T>(T arg, Func<T, _StructPoint> converter) {
+        private static _RawTuple2 _EncodeOption<T>(T arg, Func<T, _StructBlock> converter) {
             if (arg != null) {
-                return new _RawTuple1 { elem0 = converter(arg), elem1 = 1 };
+                return new _RawTuple2 { elem0 = converter(arg), elem1 = 1 };
             } else {
-                return new _RawTuple1 { elem0 = default(_StructPoint), elem1 = 0 };
+                return new _RawTuple2 { elem0 = default(_StructBlock), elem1 = 0 };
             }
         }
-        private static T _DecodeOption<T>(_RawTuple1 arg, Func<_StructPoint, T> converter) {
+        private static T _DecodeOption<T>(_RawTuple2 arg, Func<_StructBlock, T> converter) {
             if (arg.elem1 != 0) {
                 return converter(arg.elem0);
             } else {
@@ -235,18 +323,37 @@ namespace PallasDotnetRs
             }
         }
         [StructLayout(LayoutKind.Sequential)]
-        private struct _RawTuple2 {
+        private struct _RawTuple3 {
+            public _StructPoint elem0;
+            public byte elem1;
+        }
+        private static _RawTuple3 _EncodeOption<T>(T arg, Func<T, _StructPoint> converter) {
+            if (arg != null) {
+                return new _RawTuple3 { elem0 = converter(arg), elem1 = 1 };
+            } else {
+                return new _RawTuple3 { elem0 = default(_StructPoint), elem1 = 0 };
+            }
+        }
+        private static T _DecodeOption<T>(_RawTuple3 arg, Func<_StructPoint, T> converter) {
+            if (arg.elem1 != 0) {
+                return converter(arg.elem0);
+            } else {
+                return default(T);
+            }
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct _RawTuple4 {
             public _StructNextResponse elem0;
             public byte elem1;
         }
-        private static _RawTuple2 _EncodeOption<T>(T arg, Func<T, _StructNextResponse> converter) {
+        private static _RawTuple4 _EncodeOption<T>(T arg, Func<T, _StructNextResponse> converter) {
             if (arg != null) {
-                return new _RawTuple2 { elem0 = converter(arg), elem1 = 1 };
+                return new _RawTuple4 { elem0 = converter(arg), elem1 = 1 };
             } else {
-                return new _RawTuple2 { elem0 = default(_StructNextResponse), elem1 = 0 };
+                return new _RawTuple4 { elem0 = default(_StructNextResponse), elem1 = 0 };
             }
         }
-        private static T _DecodeOption<T>(_RawTuple2 arg, Func<_StructNextResponse, T> converter) {
+        private static T _DecodeOption<T>(_RawTuple4 arg, Func<_StructNextResponse, T> converter) {
             if (arg.elem1 != 0) {
                 return converter(arg.elem0);
             } else {

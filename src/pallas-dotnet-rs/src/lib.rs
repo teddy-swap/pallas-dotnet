@@ -1,10 +1,12 @@
+use std::collections::HashMap;
+
 use lazy_static::lazy_static;
 use pallas::{
-    ledger::traverse::MultiEraBlock,
+    ledger::{traverse::MultiEraBlock, addresses::{Address, ByronAddress}},
     network::{
         facades::NodeClient,
         miniprotocols::{
-            chainsync::{self, BlockContent, Client},
+            chainsync::{self},
             Point as PallasPoint, MAINNET_MAGIC, PREVIEW_MAGIC, PRE_PRODUCTION_MAGIC,
             TESTNET_MAGIC,
         },
@@ -55,7 +57,37 @@ pub struct Block {
     slot: u64,
     hash: Vec<u8>,
     number: u64,
+    trnasaction_bodies: Vec<TransactionBody>,
 }
+
+#[derive(Net)]
+pub struct TransactionBody {
+    id: Vec<u8>,
+    inputs: Vec<TransactionInput>,
+    outputs: Vec<TransactionOutput>,
+}
+
+#[derive(Net)]
+pub struct TransactionInput {
+    id: Vec<u8>,
+    index: u64,
+}
+
+#[derive(Net)]
+pub struct TransactionOutput {
+    address: Vec<u8>,
+    amount: Value,
+}
+
+#[derive(Net)]
+pub struct Value {
+    coin: Coin,
+    multi_asset: HashMap<PolicyId, HashMap<AssetName, Coin>>,
+}
+
+pub type Coin = u64;
+pub type PolicyId = Vec<u8>;
+pub type AssetName = Vec<u8>;
 
 #[derive(Net)]
 pub struct NextResponse {
@@ -67,29 +99,22 @@ pub struct NextResponse {
 #[derive(Net)]
 pub struct NodeClientWrapper {
     client_ptr: usize,
-    chain_sync_ptr: usize,
 }
 
 impl NodeClientWrapper {
     #[net]
     pub fn connect(socket_path: String, network_magic: u64) -> NodeClientWrapper {
-        let mut client = RT.block_on(async {
+        let client = RT.block_on(async {
             NodeClient::connect(&socket_path, network_magic)
                 .await
                 .unwrap()
         });
-
-        let chain_sync = client.chainsync();
-
-        let chain_sync_box = Box::new(chain_sync);
-        let chain_sync_ptr = Box::into_raw(chain_sync_box) as usize;
 
         let client_box = Box::new(client);
         let client_ptr = Box::into_raw(client_box) as usize;
 
         NodeClientWrapper {
             client_ptr,
-            chain_sync_ptr,
         }
     }
 
@@ -153,17 +178,64 @@ impl NodeClientWrapper {
                                     slot: 0,
                                     hash: vec![],
                                     number: 0,
+                                    trnasaction_bodies: vec![],
                                 }),
                                 PallasPoint::Specific(slot, hash) => Some(Block {
                                     slot,
                                     hash,
                                     number: tip.1,
+                                    trnasaction_bodies: vec![],
                                 }),
                             },
                             block: Some(Block {
                                 slot: b.slot(),
                                 hash: b.hash().to_vec(),
                                 number: b.number(),
+                                trnasaction_bodies: b
+                                    .txs()
+                                    .into_iter()
+                                    .map(|tx_body| TransactionBody {
+                                        id: tx_body.hash().to_vec(),
+                                        inputs: tx_body
+                                            .inputs()
+                                            .into_iter()
+                                            .map(|tx_input| TransactionInput {
+                                                id: tx_input.hash().to_vec(),
+                                                index: tx_input.index(),
+                                            })
+                                            .collect(),
+                                        outputs: tx_body
+                                            .outputs()
+                                            .into_iter()
+                                            .map(|tx_output| TransactionOutput {
+                                                address: tx_output.address().unwrap().to_vec(),
+                                                amount: Value {
+                                                    coin: tx_output.lovelace_amount(),
+                                                    multi_asset: tx_output
+                                                        .non_ada_assets()
+                                                        .iter()
+                                                        .filter(|ma| ma.is_output())
+                                                        .map(|ma| {
+                                                            (
+                                                                ma.policy().to_vec(),
+                                                                ma.assets()
+                                                                    .iter()
+                                                                    .map(|a| {
+                                                                        (
+                                                                            a.name().to_vec(),
+                                                                            a.output_coin()
+                                                                                .unwrap(),
+                                                                        )
+                                                                    })
+                                                                    .collect(),
+                                                            )
+                                                        })
+                                                        .collect(),
+                                                },
+                                            })
+                                            .collect(),
+                                    })
+                                    .collect(),
                             }),
                         }),
                         Err(e) => {
@@ -178,11 +250,13 @@ impl NodeClientWrapper {
                                 slot: 0,
                                 hash: vec![],
                                 number: 0,
+                                trnasaction_bodies: vec![],
                             }),
                             PallasPoint::Specific(slot, hash) => Some(Block {
                                 slot,
                                 hash,
                                 number: tip.1,
+                                trnasaction_bodies: vec![],
                             }),
                         },
                         block: match point {
@@ -190,21 +264,21 @@ impl NodeClientWrapper {
                                 slot: 0,
                                 hash: vec![],
                                 number: 0,
+                                trnasaction_bodies: vec![],
                             }),
                             PallasPoint::Specific(slot, hash) => Some(Block {
                                 slot,
                                 hash,
                                 number: 0,
+                                trnasaction_bodies: vec![],
                             }),
-                        }
+                        },
                     }),
-                    chainsync::NextResponse::Await => {
-                        Some(NextResponse {
-                            action: 2,
-                            tip: None,
-                            block: None,
-                        })
-                    }
+                    chainsync::NextResponse::Await => Some(NextResponse {
+                        action: 2,
+                        tip: None,
+                        block: None,
+                    }),
                 },
                 Err(e) => {
                     println!("error: {:?}", e);
@@ -234,6 +308,18 @@ impl NodeClientWrapper {
 
             has_agency
         }
+    }
+
+    #[net]
+    pub fn address_bytes_to_bech32(address_bytes: Vec<u8>) -> String {
+        match Address::from_bytes(&address_bytes)
+            .unwrap()
+            .to_bech32() {
+                Ok(address) => address,
+                Err(_) => {
+                    ByronAddress::from_bytes(&address_bytes).unwrap().to_base58()
+                }
+            }
     }
 
     #[net]
