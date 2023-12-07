@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 use pallas::{
-    ledger::{traverse::MultiEraBlock, addresses::{Address, ByronAddress}},
+    ledger::{
+        addresses::{Address, ByronAddress},
+        traverse::MultiEraBlock,
+    },
     network::{
         facades::NodeClient,
         miniprotocols::{
@@ -113,9 +116,7 @@ impl NodeClientWrapper {
         let client_box = Box::new(client);
         let client_ptr = Box::into_raw(client_box) as usize;
 
-        NodeClientWrapper {
-            client_ptr,
-        }
+        NodeClientWrapper { client_ptr }
     }
 
     #[net]
@@ -148,7 +149,7 @@ impl NodeClientWrapper {
     }
 
     #[net]
-    pub fn chain_sync_next(client_wrapper: NodeClientWrapper) -> Option<NextResponse> {
+    pub fn chain_sync_next(client_wrapper: NodeClientWrapper) -> NextResponse {
         unsafe {
             let client_ptr = client_wrapper.client_ptr as *mut NodeClient;
 
@@ -166,12 +167,12 @@ impl NodeClientWrapper {
                 }
             });
 
-            let block = match result {
+            let next_response = match result {
                 Ok(next) => match next {
                     chainsync::NextResponse::RollForward(h, tip) => match MultiEraBlock::decode(&h)
                     {
-                        Ok(b) => Some(NextResponse {
-                            action: 0,
+                        Ok(b) => NextResponse {
+                            action: 1,
                             tip: match tip.0 {
                                 PallasPoint::Origin => Some(Block {
                                     slot: 0,
@@ -236,14 +237,18 @@ impl NodeClientWrapper {
                                     })
                                     .collect(),
                             }),
-                        }),
+                        },
                         Err(e) => {
                             println!("error: {:?}", e);
-                            None
+                            NextResponse {
+                                action: 0,
+                                block: None,
+                                tip: None,
+                            }
                         }
                     },
-                    chainsync::NextResponse::RollBackward(point, tip) => Some(NextResponse {
-                        action: 1,
+                    chainsync::NextResponse::RollBackward(point, tip) => NextResponse {
+                        action: 2,
                         tip: match tip.0 {
                             PallasPoint::Origin => Some(Block {
                                 slot: 0,
@@ -272,22 +277,26 @@ impl NodeClientWrapper {
                                 trnasaction_bodies: vec![],
                             }),
                         },
-                    }),
-                    chainsync::NextResponse::Await => Some(NextResponse {
-                        action: 2,
+                    },
+                    chainsync::NextResponse::Await => NextResponse {
+                        action: 3,
                         tip: None,
                         block: None,
-                    }),
+                    },
                 },
                 Err(e) => {
                     println!("chain_sync_next error: {:?}", e);
-                    None
+                    NextResponse {
+                        action: 0,
+                        block: None,
+                        tip: None,
+                    }
                 }
             };
 
             // Convert client back to a raw pointer for future use
             let _ = Box::into_raw(client);
-            block
+            next_response
         }
     }
 
@@ -300,7 +309,6 @@ impl NodeClientWrapper {
             let mut _client = Box::from_raw(client_ptr);
 
             let has_agency = _client.chainsync().has_agency();
-            println!("has_agency: {:?}", has_agency);
 
             // Convert client back to a raw pointer for future use
             let _ = Box::into_raw(_client);
@@ -311,14 +319,12 @@ impl NodeClientWrapper {
 
     #[net]
     pub fn address_bytes_to_bech32(address_bytes: Vec<u8>) -> String {
-        match Address::from_bytes(&address_bytes)
-            .unwrap()
-            .to_bech32() {
-                Ok(address) => address,
-                Err(_) => {
-                    ByronAddress::from_bytes(&address_bytes).unwrap().to_base58()
-                }
-            }
+        match Address::from_bytes(&address_bytes).unwrap().to_bech32() {
+            Ok(address) => address,
+            Err(_) => ByronAddress::from_bytes(&address_bytes)
+                .unwrap()
+                .to_base58(),
+        }
     }
 
     #[net]

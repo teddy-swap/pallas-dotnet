@@ -2,6 +2,7 @@
 
 public enum NextResponseAction
 {
+    Null,
     RollForward,
     RollBack,
     Await
