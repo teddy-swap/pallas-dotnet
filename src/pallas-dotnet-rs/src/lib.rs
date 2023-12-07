@@ -162,7 +162,6 @@ impl NodeClientWrapper {
                     client.chainsync().request_next().await
                 } else {
                     // When the client does not have the agency, wait for the server's response
-                    println!("awaiting next block (blocking)");
                     client.chainsync().recv_while_must_reply().await
                 }
             });
@@ -281,7 +280,7 @@ impl NodeClientWrapper {
                     }),
                 },
                 Err(e) => {
-                    println!("error: {:?}", e);
+                    println!("chain_sync_next error: {:?}", e);
                     None
                 }
             };

@@ -1,16 +1,17 @@
 ﻿using PallasDotnet;
+using Spectre.Console;
 
 var nodeClient = PallasDotnetRs.PallasDotnetRs
-    .Connect("/home/rawriclark/.dmtr/tmp/tasteful-infusion-213dd4/mainnet-v135.socket", PallasDotnetRs.PallasDotnetRs.MainnetMagic());
-Console.WriteLine($"Node Connected: {nodeClient.clientPtr}");
+            .Connect("/home/rawriclark/.dmtr/tmp/tasteful-infusion-213dd4/mainnet-v135.socket", PallasDotnetRs.PallasDotnetRs.MainnetMagic());
+ConsoleHelper.WriteLine($"Node Connected: {nodeClient.clientPtr}", ConsoleColor.Green);
 
 var intersection = PallasDotnetRs.PallasDotnetRs.FindIntersect(nodeClient, new PallasDotnetRs.PallasDotnetRs.Point
 {
-    slot = 110315401,
-    hash = new List<byte>(Convert.FromHexString("24e29f4d92ff6b25251e417d4f633cdead1bd3ad8b0ba3970e45dcc4ee6fbfcf"))
+    slot = 110417596,
+    hash = new List<byte>(Convert.FromHexString("5a2a556b5275e7c5ad5573ebced7790355e7a81e8f3d5cb9930da4a4d31c7a5a"))
 });
 
-Console.WriteLine($"Intersection Found: {intersection.slot} {Convert.ToHexString(intersection.hash.ToArray()).ToLower()}");
+ConsoleHelper.WriteLine($"Intersection Found: {intersection.slot} {Convert.ToHexString(intersection.hash.ToArray()).ToLower()}", ConsoleColor.Yellow);
 
 while (true)
 {
@@ -20,23 +21,45 @@ while (true)
         await Task.Delay(20000);
         continue;
     }
-    Console.WriteLine($"Next Response: {(NextResponseAction)nextResponse.action} {nextResponse.block.number} {nextResponse.block.slot} {Convert.ToHexString(nextResponse.block.hash.ToArray()).ToLower()} {nextResponse.block.trnasactionBodies.Count}");
-    Console.WriteLine("====================================");
+
+    // Extract the block hash for the header
+    var blockHash = Convert.ToHexString(nextResponse.block.hash.ToArray()).ToLower();
+
+    // Create a table for the block
+    var table = new Table();
+    table.Border(TableBorder.Rounded);
+    table.Title($"[bold yellow]Block: {blockHash}[/]");
+    table.AddColumn(new TableColumn("[u]Field[/]").Centered());
+    table.AddColumn(new TableColumn("[u]Value[/]").Centered());
+
+    // Add rows to the table for the block details with colors
+    table.AddRow("[blue]Block Number[/]", nextResponse.block.number.ToString());
+    table.AddRow("[blue]Slot[/]", nextResponse.block.slot.ToString());
+    table.AddRow("[blue]TX Count[/]", nextResponse.block.trnasactionBodies.Count.ToString());
+
+    // Calculate input count, output count, assets count, and total ADA output
+    int inputCount = 0, outputCount = 0, assetsCount = 0;
+    ulong totalADAOutput = 0;
+
     foreach (var transactionBody in nextResponse.block.trnasactionBodies)
     {
-        Console.WriteLine($"Transaction Body: {Convert.ToHexString(transactionBody.id.ToArray()).ToLower()} {transactionBody.inputs.Count} {transactionBody.outputs.Count}");
-        foreach (var input in transactionBody.inputs)
-        {
-            Console.WriteLine($"\t Input: {Convert.ToHexString(input.id.ToArray()).ToLower()} {input.index}");
-        }
-        foreach (var output in transactionBody.outputs)
-        {
-            Console.WriteLine($"\t Output: {output.amount.coin} {PallasDotnetRs.PallasDotnetRs.AddressBytesToBech32(output.address)} {output.amount.multiAsset.Count}");
-        }
+        inputCount += transactionBody.inputs.Count;
+        outputCount += transactionBody.outputs.Count;
+        assetsCount += transactionBody.outputs.Sum(o => o.amount.multiAsset.Count);
+        transactionBody.outputs.ForEach(o => totalADAOutput += o.amount.coin);
     }
-    Console.WriteLine("====================================");
+
+    // Add the calculated data with colors
+    table.AddRow("[green]Input Count[/]", inputCount.ToString());
+    table.AddRow("[green]Output Count[/]", outputCount.ToString());
+    table.AddRow("[green]Assets Count[/]", assetsCount.ToString());
+    
+    var totalADAFormatted = (totalADAOutput / 1000000m).ToString("N6") + " ADA";
+    table.AddRow("[green]Total ADA Output[/]", totalADAFormatted);
+
+    // Render the table to the console
+    AnsiConsole.Write(table);
 }
 
-Console.WriteLine($"Disconnected: {nodeClient.clientPtr}");
+ConsoleHelper.WriteLine($"Disconnected: {nodeClient.clientPtr}", ConsoleColor.DarkRed);
 PallasDotnetRs.PallasDotnetRs.Disconnect(nodeClient);
-
