@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>PallasDotnet</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="cargo build --release --manifest-path ../pallas-dotnet-rs/Cargo.toml" />
+    <Exec Command="cp ../pallas-dotnet-rs/target/release/libpallas_dotnet_rs.so $(ProjectDir)/lib/pallas_dotnet_rs.so" />
+    <Exec Command="rnet-gen ../pallas-dotnet-rs/target/release/libpallas_dotnet_rs.so >  $(ProjectDir)/PallasDotnetWrapper.cs" />
+  </Target>
+
+  <ItemGroup>
+    <None Update="lib/*.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>%(FileName)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+</Project>
