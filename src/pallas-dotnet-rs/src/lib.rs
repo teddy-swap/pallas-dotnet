@@ -11,7 +11,7 @@ use pallas::{
         miniprotocols::{
             chainsync::{self},
             Point as PallasPoint, MAINNET_MAGIC, PREVIEW_MAGIC, PRE_PRODUCTION_MAGIC,
-            TESTNET_MAGIC,
+            TESTNET_MAGIC, localstate::queries_v16,
         },
     },
 };
@@ -60,7 +60,7 @@ pub struct Block {
     slot: u64,
     hash: Vec<u8>,
     number: u64,
-    trnasaction_bodies: Vec<TransactionBody>,
+    transaction_bodies: Vec<TransactionBody>,
 }
 
 #[derive(Net)]
@@ -117,6 +117,36 @@ impl NodeClientWrapper {
         let client_ptr = Box::into_raw(client_box) as usize;
 
         NodeClientWrapper { client_ptr }
+    }
+
+    #[net]
+    pub fn get_tip(client_wrapper: NodeClientWrapper) -> Point {
+        unsafe {
+            let client_ptr = client_wrapper.client_ptr as *mut NodeClient;
+
+            // Convert the raw pointer back to a Box to deallocate the memory
+            let mut client = Box::from_raw(client_ptr);
+
+            // Get the tip
+            let tip = RT.block_on(async {
+                let state_query_client = client.statequery();
+
+                state_query_client.acquire(None).await.unwrap();
+
+                queries_v16::get_chain_point(state_query_client).await.unwrap()
+            });
+
+            // Convert client back to a raw pointer for future use
+            let _ = Box::into_raw(client);
+
+            match tip {
+                PallasPoint::Origin => Point {
+                    slot: 0,
+                    hash: vec![],
+                },
+                PallasPoint::Specific(slot, hash) => Point { slot, hash },
+            }
+        }
     }
 
     #[net]
@@ -178,20 +208,20 @@ impl NodeClientWrapper {
                                     slot: 0,
                                     hash: vec![],
                                     number: 0,
-                                    trnasaction_bodies: vec![],
+                                    transaction_bodies: vec![],
                                 }),
                                 PallasPoint::Specific(slot, hash) => Some(Block {
                                     slot,
                                     hash,
                                     number: tip.1,
-                                    trnasaction_bodies: vec![],
+                                    transaction_bodies: vec![],
                                 }),
                             },
                             block: Some(Block {
                                 slot: b.slot(),
                                 hash: b.hash().to_vec(),
                                 number: b.number(),
-                                trnasaction_bodies: b
+                                transaction_bodies: b
                                     .txs()
                                     .into_iter()
                                     .map(|tx_body| TransactionBody {
@@ -254,13 +284,13 @@ impl NodeClientWrapper {
                                 slot: 0,
                                 hash: vec![],
                                 number: 0,
-                                trnasaction_bodies: vec![],
+                                transaction_bodies: vec![],
                             }),
                             PallasPoint::Specific(slot, hash) => Some(Block {
                                 slot,
                                 hash,
                                 number: tip.1,
-                                trnasaction_bodies: vec![],
+                                transaction_bodies: vec![],
                             }),
                         },
                         block: match point {
@@ -268,13 +298,13 @@ impl NodeClientWrapper {
                                 slot: 0,
                                 hash: vec![],
                                 number: 0,
-                                trnasaction_bodies: vec![],
+                                transaction_bodies: vec![],
                             }),
                             PallasPoint::Specific(slot, hash) => Some(Block {
                                 slot,
                                 hash,
                                 number: 0,
-                                trnasaction_bodies: vec![],
+                                transaction_bodies: vec![],
                             }),
                         },
                     },

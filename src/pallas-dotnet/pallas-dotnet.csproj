@@ -11,7 +11,7 @@
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="cargo build --release --manifest-path ../pallas-dotnet-rs/Cargo.toml" />
     <Exec Command="cp ../pallas-dotnet-rs/target/release/libpallas_dotnet_rs.so $(ProjectDir)/lib/pallas_dotnet_rs.so" />
-    <Exec Command="rnet-gen ../pallas-dotnet-rs/target/release/libpallas_dotnet_rs.so >  $(ProjectDir)/PallasDotnetWrapper.cs" />
+    <Exec Command="rnet-gen ../pallas-dotnet-rs/target/release/libpallas_dotnet_rs.so &gt;  $(ProjectDir)/PallasDotnetWrapper.cs" />
   </Target>
 
   <ItemGroup>
@@ -19,5 +19,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>%(FileName)%(Extension)</Link>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Models/" />
   </ItemGroup>
 </Project>

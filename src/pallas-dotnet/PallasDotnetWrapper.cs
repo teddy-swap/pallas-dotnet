@@ -24,7 +24,7 @@ namespace PallasDotnetRs
             public ulong slot;
             public List<byte> hash;
             public ulong number;
-            public List<TransactionBody> trnasactionBodies;
+            public List<TransactionBody> transactionBodies;
         }
         public struct TransactionBody {
             public List<byte> id;
@@ -72,6 +72,11 @@ namespace PallasDotnetRs
             ulong networkMagic
         ) {
             return (_FnConnect(_AllocStr(socketPath),networkMagic)).Decode();
+        }
+        public static Point GetTip(
+            NodeClientWrapper clientWrapper
+        ) {
+            return (_FnGetTip(_StructNodeClientWrapper.Encode(clientWrapper))).Decode();
         }
         public static Point FindIntersect(
             NodeClientWrapper clientWrapper,
@@ -132,13 +137,13 @@ namespace PallasDotnetRs
             public ulong slot;
             public _RawSlice hash;
             public ulong number;
-            public _RawSlice trnasactionBodies;
+            public _RawSlice transactionBodies;
             public static _StructBlock Encode(Block structArg) {
                 return new _StructBlock {
                     slot = structArg.slot,
                     hash = _AllocSlice<byte, byte>(structArg.hash, 1, 1, _arg5 => _arg5),
                     number = structArg.number,
-                    trnasactionBodies = _AllocSlice<TransactionBody, _StructTransactionBody>(structArg.trnasactionBodies, 48, 8, _arg6 => _StructTransactionBody.Encode(_arg6))
+                    transactionBodies = _AllocSlice<TransactionBody, _StructTransactionBody>(structArg.transactionBodies, 48, 8, _arg6 => _StructTransactionBody.Encode(_arg6))
                 };
             }
             public Block Decode() {
@@ -146,7 +151,7 @@ namespace PallasDotnetRs
                     slot = this.slot,
                     hash = _FreeSlice<byte, byte, List<byte>>(this.hash, 1, 1, _arg7 => _arg7),
                     number = this.number,
-                    trnasactionBodies = _FreeSlice<TransactionBody, _StructTransactionBody, List<TransactionBody>>(this.trnasactionBodies, 48, 8, _arg8 => (_arg8).Decode())
+                    transactionBodies = _FreeSlice<TransactionBody, _StructTransactionBody, List<TransactionBody>>(this.transactionBodies, 48, 8, _arg8 => (_arg8).Decode())
                 };
             }
         }
@@ -271,6 +276,10 @@ namespace PallasDotnetRs
         private static extern _StructNodeClientWrapper _FnConnect(
             _RawSlice socketPath,
             ulong networkMagic
+        );
+        [DllImport("pallas_dotnet_rs", EntryPoint = "rnet_export_get_tip", CallingConvention = CallingConvention.Cdecl)]
+        private static extern _StructPoint _FnGetTip(
+            _StructNodeClientWrapper clientWrapper
         );
         [DllImport("pallas_dotnet_rs", EntryPoint = "rnet_export_find_intersect", CallingConvention = CallingConvention.Cdecl)]
         private static extern _RawTuple3 _FnFindIntersect(
