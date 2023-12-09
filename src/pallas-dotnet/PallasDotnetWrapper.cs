@@ -38,6 +38,7 @@ namespace PallasDotnetRs
         public struct TransactionOutput {
             public List<byte> address;
             public Value amount;
+            public UIntPtr index;
         }
         public struct Value {
             public ulong coin;
@@ -164,14 +165,14 @@ namespace PallasDotnetRs
                 return new _StructTransactionBody {
                     id = _AllocSlice<byte, byte>(structArg.id, 1, 1, _arg9 => _arg9),
                     inputs = _AllocSlice<TransactionInput, _StructTransactionInput>(structArg.inputs, 24, 8, _arg10 => _StructTransactionInput.Encode(_arg10)),
-                    outputs = _AllocSlice<TransactionOutput, _StructTransactionOutput>(structArg.outputs, 40, 8, _arg11 => _StructTransactionOutput.Encode(_arg11))
+                    outputs = _AllocSlice<TransactionOutput, _StructTransactionOutput>(structArg.outputs, 48, 8, _arg11 => _StructTransactionOutput.Encode(_arg11))
                 };
             }
             public TransactionBody Decode() {
                 return new TransactionBody {
                     id = _FreeSlice<byte, byte, List<byte>>(this.id, 1, 1, _arg12 => _arg12),
                     inputs = _FreeSlice<TransactionInput, _StructTransactionInput, List<TransactionInput>>(this.inputs, 24, 8, _arg13 => (_arg13).Decode()),
-                    outputs = _FreeSlice<TransactionOutput, _StructTransactionOutput, List<TransactionOutput>>(this.outputs, 40, 8, _arg14 => (_arg14).Decode())
+                    outputs = _FreeSlice<TransactionOutput, _StructTransactionOutput, List<TransactionOutput>>(this.outputs, 48, 8, _arg14 => (_arg14).Decode())
                 };
             }
         }
@@ -196,16 +197,19 @@ namespace PallasDotnetRs
         private struct _StructTransactionOutput {
             public _RawSlice address;
             public _StructValue amount;
+            public UIntPtr index;
             public static _StructTransactionOutput Encode(TransactionOutput structArg) {
                 return new _StructTransactionOutput {
                     address = _AllocSlice<byte, byte>(structArg.address, 1, 1, _arg17 => _arg17),
-                    amount = _StructValue.Encode(structArg.amount)
+                    amount = _StructValue.Encode(structArg.amount),
+                    index = structArg.index
                 };
             }
             public TransactionOutput Decode() {
                 return new TransactionOutput {
                     address = _FreeSlice<byte, byte, List<byte>>(this.address, 1, 1, _arg18 => _arg18),
-                    amount = (this.amount).Decode()
+                    amount = (this.amount).Decode(),
+                    index = this.index
                 };
             }
         }

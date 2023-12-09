@@ -1,6 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <PackageId>Pallas.NET</PackageId>
+    <Version>0.1.9</Version>
+    <VersionSuffix>beta</VersionSuffix>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyName>Pallas.NET</AssemblyName>
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>PallasDotnet</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,18 +19,32 @@
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="cargo build --release --manifest-path ../pallas-dotnet-rs/Cargo.toml" />
-    <Exec Command="cp ../pallas-dotnet-rs/target/release/libpallas_dotnet_rs.so $(ProjectDir)/lib/pallas_dotnet_rs.so" />
-    <Exec Command="rnet-gen ../pallas-dotnet-rs/target/release/libpallas_dotnet_rs.so &gt;  $(ProjectDir)/PallasDotnetWrapper.cs" />
+    <Exec Command="cp ../pallas-dotnet-rs/target/release/libpallas_dotnet_rs.so $(ProjectDir)/libpallas_dotnet_rs.so" />
+    <Exec Command="rnet-gen ../pallas-dotnet-rs/target/release/libpallas_dotnet_rs.so &gt; $(ProjectDir)/PallasDotnetWrapper.cs" />
   </Target>
 
   <ItemGroup>
-    <None Update="lib/*.so">
+    <None Update="*.so">
+      <Pack>true</Pack>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>%(FileName)%(Extension)</Link>
     </None>
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="libpallas_dotnet_rs.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <PackageCopyToOutput>true</PackageCopyToOutput>
+      <pack>true</pack>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Models/" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
 </Project>

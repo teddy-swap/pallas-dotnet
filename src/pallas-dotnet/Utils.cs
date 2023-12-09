@@ -38,7 +38,8 @@ public class Utils
     public static TransactionOutput MapPallasTransactionOutput(PallasDotnetRs.PallasDotnetRs.TransactionOutput rsTransactionOutput)
         => new(
             new Address([.. rsTransactionOutput.address]),
-            MapPallasValue(rsTransactionOutput.amount)
+            MapPallasValue(rsTransactionOutput.amount),
+            rsTransactionOutput.index
         );
 
     public static Value MapPallasValue(PallasDotnetRs.PallasDotnetRs.Value rsValue)

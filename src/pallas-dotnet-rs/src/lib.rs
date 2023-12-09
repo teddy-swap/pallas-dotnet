@@ -80,6 +80,7 @@ pub struct TransactionInput {
 pub struct TransactionOutput {
     address: Vec<u8>,
     amount: Value,
+    index: usize,
 }
 
 #[derive(Net)]
@@ -237,7 +238,9 @@ impl NodeClientWrapper {
                                         outputs: tx_body
                                             .outputs()
                                             .into_iter()
-                                            .map(|tx_output| TransactionOutput {
+                                            .enumerate()
+                                            .map(|(index, tx_output)| TransactionOutput {
+                                                index,
                                                 address: tx_output.address().unwrap().to_vec(),
                                                 amount: Value {
                                                     coin: tx_output.lovelace_amount(),
