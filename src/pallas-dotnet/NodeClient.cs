@@ -66,7 +66,10 @@ public class NodeClient
             IsSyncing = true;
             while (IsSyncing)
             {
+
                 var nextResponseRs = PallasDotnetRs.PallasDotnetRs.ChainSyncNext(_nodeClient.Value);
+                
+
                 if ((NextResponseAction)nextResponseRs.action == NextResponseAction.Error)
                 {
                     if (ShouldRecoonect)
